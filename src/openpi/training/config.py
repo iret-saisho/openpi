@@ -660,9 +660,7 @@ _CONFIGS = [
                     )
                 ]
             ),
-            base_config=DataConfig(
-                local_files_only=False,  # Set to True for local-only datasets.
-            ),
+            base_config=DataConfig(),
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=1000,
