@@ -634,6 +634,41 @@ _CONFIGS = [
         num_train_steps=10,
         wandb_enabled=False,
     ),
+    # 確認用 config
+    TrainConfig(
+        name="dummy_saisho",
+        model=pi0.Pi0Config(),
+        data=LeRobotAlohaDataConfig(
+            repo_id="nouse",
+            assets=AssetsConfig(
+                assets_dir="s3://openpi-assets/checkpoints/pi0_base/assets",
+                asset_id="trossen",
+            ),
+            default_prompt="this is dummy",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "action",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                local_files_only=False,  # Set to True for local-only datasets.
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        num_train_steps=1000,
+        fsdp_devices=4,
+        wandb_enabled=False,
+    ),
 ]
 
 if len({config.name for config in _CONFIGS}) != len(_CONFIGS):
