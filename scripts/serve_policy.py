@@ -97,6 +97,7 @@ def create_policy(args: Args) -> _policy.Policy:
 
 
 def main(args: Args) -> None:
+    print("Starting policy server with arguments:", args)
     policy = create_policy(args)
     policy_metadata = policy.metadata
 
