@@ -667,6 +667,171 @@ _CONFIGS = [
         fsdp_devices=4,
         wandb_enabled=False,
     ),
+    # puck pick デモ使用
+    TrainConfig(
+        name="puckpick_lora_pi0_base",
+        batch_size=8,
+
+        model=pi0.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
+        data=LeRobotAlohaDataConfig(
+            repo_id="puckpick",
+            assets=AssetsConfig(
+                assets_dir="s3://openpi-assets/checkpoints/pi0_base/assets",
+                asset_id="trossen_mobile",
+            ),
+            default_prompt="place the juice carton on the box",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "action",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                # local_files_only=True,  # Set to True for local-only datasets.
+                prompt_from_task=True,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_fast_base/params"),
+        num_train_steps=100_000,
+        freeze_filter=pi0.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"
+        ).get_freeze_filter(),
+        ema_decay=None,
+    ),
+
+    TrainConfig(
+        name="puckpick_lora",
+        batch_size=2,
+        # model=pi0.Pi0Config(),
+        model=pi0_fast.Pi0FASTConfig(paligemma_variant="gemma_2b_lora"),
+        data=LeRobotAlohaDataConfig(
+            repo_id="puckpick",
+            assets=AssetsConfig(
+                assets_dir="s3://openpi-assets/checkpoints/pi0_fast_base/assets",
+                asset_id="trossen_mobile",
+            ),
+            default_prompt="place the carton on the box",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "action",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                # local_files_only=True,  # Set to True for local-only datasets.
+            ),
+        ),
+        # weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_base/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi0_fast_base/params"),
+        num_train_steps=20000,
+        freeze_filter=pi0_fast.Pi0FASTConfig(
+            paligemma_variant="gemma_2b_lora"
+        ).get_freeze_filter(),
+        ema_decay=None,
+    ),
+
+    TrainConfig( # 48GB VRAM needed
+        name="puckpick_full_pi0_base",
+        batch_size=1,
+        model=pi0.Pi0Config(
+            paligemma_variant="gemma_2b",
+            action_expert_variant="gemma_300m",
+        ),
+        data=LeRobotAlohaDataConfig(
+            repo_id="puckpick",
+            assets=AssetsConfig(
+                assets_dir="s3://openpi-assets/checkpoints/pi0_base/assets",
+                asset_id="trossen_mobile",
+            ),
+            default_prompt="place the juice carton on the box",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "action",
+                        }
+                    )
+                ]
+            ),
+
+            base_config=DataConfig(
+                # local_files_only=True,
+                prompt_from_task=True
+                ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader(
+            "s3://openpi-assets/checkpoints/pi0_base/params"
+        ),
+        num_train_steps=100_000,
+        freeze_filter=None,           
+        ema_decay=0.999,              
+    ),
+
+    TrainConfig(#43GB VRAM needed
+        name="puckpick_full_pi0_fast",
+        batch_size=1,
+        model=pi0_fast.Pi0FASTConfig(
+            paligemma_variant="gemma_2b",
+            
+        ),
+        data=LeRobotAlohaDataConfig(
+            repo_id="puckpick",
+            assets=AssetsConfig(
+                assets_dir="s3://openpi-assets/checkpoints/pi0_fast_base/assets",
+                asset_id="trossen_mobile",
+            ),
+            default_prompt="place the carton on the box",
+            repack_transforms=_transforms.Group(
+                inputs=[
+                    _transforms.RepackTransform(
+                        {
+                            "images": {
+                                "cam_high": "observation.images.cam_high",
+                                "cam_left_wrist": "observation.images.cam_left_wrist",
+                                "cam_right_wrist": "observation.images.cam_right_wrist",
+                            },
+                            "state": "observation.state",
+                            "actions": "action",
+                        }
+                    )
+                ]
+            ),
+            base_config=DataConfig(
+                # local_files_only=True
+                ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader(
+            "s3://openpi-assets/checkpoints/pi0_fast_base/params"
+        ),
+        num_train_steps=20_000,
+        freeze_filter=None,
+        ema_decay=0.999,
+    ),
 ]
 
 if len({config.name for config in _CONFIGS}) != len(_CONFIGS):
